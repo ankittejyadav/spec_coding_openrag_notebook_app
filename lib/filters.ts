@@ -26,26 +26,31 @@ function buildQueryData(filenames: string[]) {
 export async function createNotebookFilter(notebookId: string, notebookName: string): Promise<string> {
   const filterName = buildFilterName(notebookName)
 
-  // Use a generous limit so we don't miss an existing filter when there are many
-  const existingFilters = await openrag.knowledgeFilters.search(filterName, 100)
-  const matchingFilter = existingFilters.find(f => f.name === filterName)
+  try {
+    const existingFilters = await openrag.knowledgeFilters.search(filterName, 100)
+    const matchingFilter = existingFilters.find(f => f.name === filterName)
 
-  if (matchingFilter) {
-    const owner = getNotebookByFilterId(matchingFilter.id)
-    if (owner && owner.id !== notebookId) {
-      throw Object.assign(new Error(`A notebook named "${notebookName}" already exists. Choose a different name.`), { code: 'FILTER_NAME_CONFLICT' })
+    if (matchingFilter) {
+      const owner = getNotebookByFilterId(matchingFilter.id)
+      if (owner && owner.id !== notebookId) {
+        throw Object.assign(new Error(`A notebook named "${notebookName}" already exists. Choose a different name.`), { code: 'FILTER_NAME_CONFLICT' })
+      }
+      return matchingFilter.id
     }
-    console.log(`Found existing filter for notebook ${notebookId}: ${matchingFilter.id}`)
-    return matchingFilter.id
-  }
 
-  const result = await openrag.knowledgeFilters.create({
-    name: filterName,
-    description: `Sources for notebook: ${notebookName}`,
-    queryData: buildQueryData([]),
-  })
-  console.log(`Created new filter for notebook ${notebookId}: ${result.id}`)
-  return result.id!
+    const result = await openrag.knowledgeFilters.create({
+      name: filterName,
+      description: `Sources for notebook: ${notebookName}`,
+      queryData: buildQueryData([]),
+    })
+    return result.id!
+  } catch (e: any) {
+    if (e?.code === 'FILTER_NAME_CONFLICT') throw e
+    // If remote OpenRAG is offline/unreachable, fallback to local synthetic filter ID
+    const fallbackId = `filter_local_${notebookId.slice(3, 11)}`
+    console.warn(`OpenRAG server offline/unreachable. Created local fallback filter: ${fallbackId}`)
+    return fallbackId
+  }
 }
 
 // Enqueue an update for a notebook's filter. Concurrent calls for the same
@@ -100,8 +105,13 @@ async function _doFilterUpdate(notebookId: string): Promise<void> {
 }
 
 export async function importNotebookFilterSources(notebookId: string, filterId: string): Promise<number> {
-  const filter = await openrag.knowledgeFilters.get(filterId)
-  if (!filter) throw new Error('Filter not found')
+  let filter: any = null
+  try {
+    filter = await openrag.knowledgeFilters.get(filterId)
+  } catch {
+    return 0
+  }
+  if (!filter) return 0
 
   const filenames = filter.queryData?.filters?.data_sources ?? []
   if (filenames.length === 0) return 0

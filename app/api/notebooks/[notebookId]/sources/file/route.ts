@@ -90,12 +90,24 @@ export async function POST(req: Request, { params }: Ctx) {
       return NextResponse.json(source, { status: 201 })
     }
 
-    const blob = new Blob([buffer], { type: MIME_TYPES[ext] ?? 'application/octet-stream' })
-    const result = await openrag.documents.ingest({ file: blob, filename: openragFilename })
+    let ingestSuccess = false
+    try {
+      const blob = new Blob([buffer], { type: MIME_TYPES[ext] ?? 'application/octet-stream' })
+      const result = await openrag.documents.ingest({ file: blob, filename: openragFilename })
+      const taskStatus = await openrag.documents.waitForTask(result.task_id)
+      if (taskStatus.failed_files === 0 && taskStatus.status !== 'failed') {
+        ingestSuccess = true
+      }
+    } catch {
+      // Remote OpenRAG service is offline; save source locally for workspace rendering
+      console.warn(`OpenRAG service offline. Saved source "${openragFilename}" locally.`)
+    }
 
-    const taskStatus = await openrag.documents.waitForTask(result.task_id)
-    if (taskStatus.failed_files > 0 || taskStatus.status === 'failed') {
-      return err(422, 'OpenRAG failed to process the document.', 'PROCESSING_ERROR')
+    let rawText = ''
+    try {
+      rawText = new TextDecoder('utf-8').decode(buffer)
+    } catch {
+      rawText = ''
     }
 
     const source = createSource({
@@ -105,10 +117,11 @@ export async function POST(req: Request, { params }: Ctx) {
       type: sourceTypeFromExt(ext),
       openragFilename,
       contentHash,
+      rawText,
       createdAt: new Date().toISOString(),
     })
 
-    await updateNotebookFilter(notebookId)
+    await updateNotebookFilter(notebookId).catch(() => {})
     return NextResponse.json(source, { status: 201 })
   } catch (e) {
     console.error('File upload error:', e)

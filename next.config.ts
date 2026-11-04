@@ -1,15 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
-  },
-  // Increase body size limit for PDF uploads (default is 1MB)
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
+  serverExternalPackages: ['better-sqlite3'],
   // Prevent hot reload during file uploads in development
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {

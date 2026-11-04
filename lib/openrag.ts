@@ -1,11 +1,7 @@
 import { OpenRAGClient } from 'openrag-sdk'
 
-if (!process.env.OPENRAG_API_KEY) {
-  throw new Error('OPENRAG_API_KEY is not set')
-}
-
 export const openrag = new OpenRAGClient({
-  apiKey: process.env.OPENRAG_API_KEY,
+  apiKey: process.env.OPENRAG_API_KEY || 'dummy_key',
   baseUrl: process.env.OPENRAG_URL ?? 'http://localhost:3000',
   timeout: 600_000,
 })

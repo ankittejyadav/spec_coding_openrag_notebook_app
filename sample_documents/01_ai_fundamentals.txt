@@ -1,0 +1,17 @@
+# Introduction to Artificial Intelligence and Machine Learning
+
+Artificial Intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think, learn, and solve problems like humans. At its core, AI encompasses a wide range of subfields, including machine learning, natural language processing, computer vision, and robotics.
+
+## Core Concepts
+
+1. Machine Learning (ML):
+   Machine learning is a branch of AI focused on building applications that learn from data and improve their accuracy over time without being explicitly programmed. ML algorithms use statistical methods to discover patterns in data.
+
+2. Supervised Learning:
+   In supervised learning, models are trained using labeled datasets where the input data is paired with the correct target output. Common algorithms include Linear Regression, Decision Trees, and Support Vector Machines.
+
+3. Unsupervised Learning:
+   Unsupervised learning deals with unlabeled data. The goal is to infer underlying structures, clusters, or patterns within the data. Examples include K-Means Clustering and Principal Component Analysis (PCA).
+
+4. Deep Learning & Neural Networks:
+   Deep Learning uses multi-layered artificial neural networks inspired by the human brain. Deep neural networks power computer vision, automatic speech recognition, and modern generative AI models.

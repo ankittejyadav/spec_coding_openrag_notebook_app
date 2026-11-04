@@ -1,5 +1,6 @@
 import { getNotebook, createChatMessage, updateNotebookChatId } from '@/lib/store'
 import { openrag } from '@/lib/openrag'
+import { generateAstraRAGResponse } from '@/lib/astra_rag'
 import { resolveSelectedFilenames, QUERY_LIMIT, QUERY_SCORE_THRESHOLD } from '@/lib/filters'
 import { err, mapSdkError } from '@/lib/errors'
 
@@ -34,9 +35,27 @@ export async function POST(req: Request, { params }: Ctx) {
       scoreThreshold: QUERY_SCORE_THRESHOLD,
       stream: true as const,
     }
-    console.log('[OpenRAG Debug] chat.create:', JSON.stringify(chatParams))
-
-    const stream = await openrag.chat.create(chatParams)
+    let stream: any = null
+    try {
+      stream = await openrag.chat.create(chatParams)
+    } catch {
+      // Fallback streamer using local sources & Astra DB vector configuration
+      const fallbackText = await generateAstraRAGResponse(notebookId, message, selectedSourceIds)
+      const encoder = new TextEncoder()
+      const readable = new ReadableStream({
+        async start(controller) {
+          controller.enqueue(encoder.encode(`event: content\ndata: ${JSON.stringify({ delta: fallbackText })}\n\n`))
+          const assistantCreatedAt = new Date().toISOString()
+          createChatMessage({ id: userMessageId, notebookId, role: 'user', content: message, createdAt: userCreatedAt })
+          createChatMessage({ id: assistantMessageId, notebookId, role: 'assistant', content: fallbackText, createdAt: assistantCreatedAt })
+          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ chatId: `chat_${notebookId}` })}\n\n`))
+          controller.close()
+        }
+      })
+      return new Response(readable, {
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
+      })
+    }
 
     const encoder = new TextEncoder()
     const readable = new ReadableStream({

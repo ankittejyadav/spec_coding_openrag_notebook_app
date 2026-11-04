@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import { getNotebook, createNote } from '@/lib/store'
 import { openrag } from '@/lib/openrag'
+import { generateAstraRAGResponse } from '@/lib/astra_rag'
 import { resolveSelectedFilenames, QUERY_LIMIT, QUERY_SCORE_THRESHOLD } from '@/lib/filters'
 import { err, mapSdkError } from '@/lib/errors'
 
@@ -33,7 +34,32 @@ export async function POST(req: Request, { params }: Ctx) {
     }
     console.log('[OpenRAG Debug] overview chat.create:', JSON.stringify(chatParams))
 
-    const stream = await openrag.chat.create(chatParams)
+    let stream: any = null
+    try {
+      stream = await openrag.chat.create(chatParams)
+    } catch {
+      const overviewText = await generateAstraRAGResponse(notebookId, "Provide an overall executive summary and overview of the document", selectedSourceIds)
+      const encoder = new TextEncoder()
+      const readable = new ReadableStream({
+        async start(controller) {
+          const statusMsg = `I have started creating an overview for you.\n\nYou can find it in the Notes panel once it finishes generating.`
+          controller.enqueue(encoder.encode(`event: status\ndata: ${JSON.stringify({ message: statusMsg })}\n\n`))
+          controller.enqueue(encoder.encode(`event: content\ndata: ${JSON.stringify({ delta: overviewText })}\n\n`))
+          const now = new Date().toISOString()
+          const note = createNote({
+            id: `note_${uuid()}`, notebookId,
+            title: `Overview — ${now.slice(0, 10)}`, type: 'overview',
+            body: overviewText, createdAt: now, updatedAt: now,
+          })
+          controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ note })}\n\n`))
+          controller.close()
+        }
+      })
+      return new Response(readable, {
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
+      })
+    }
+
     let fullContent = ''
 
     const encoder = new TextEncoder()

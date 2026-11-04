@@ -1,0 +1,24 @@
+# Large Language Models and Retrieval-Augmented Generation (RAG)
+
+Large Language Models (LLMs) like GPT-4, Gemini, and Llama are trained on massive text corpora to predict missing words and generate human-like text responses. While LLMs excel at creative generation and general reasoning, they suffer from two major limitations: hallucinations and static knowledge cutoff dates.
+
+## What is Retrieval-Augmented Generation (RAG)?
+
+Retrieval-Augmented Generation (RAG) combines the power of LLMs with external document retrieval systems to ground AI responses in factual, domain-specific data.
+
+### RAG Pipeline Architecture:
+
+1. Document Ingestion & Chunking:
+   External documents (PDFs, Markdown, Webpages) are ingested, parsed into small semantic text passages (chunks), and processed.
+
+2. Vector Embedding:
+   Each text chunk is passed through an embedding model (e.g. text-embedding-3) that converts text into dense mathematical vector representations.
+
+3. Vector Database Storage:
+   Vector embeddings are indexed in high-performance vector databases like DataStax Astra DB or OpenSearch.
+
+4. Semantic Retrieval:
+   When a user submits a query, the query is embedded into a vector, and the database returns the top-k most semantically relevant document chunks using cosine similarity search.
+
+5. Augmented Generation:
+   The retrieved context chunks are prepended to the prompt sent to the LLM, enabling accurate answers with precise inline citations.

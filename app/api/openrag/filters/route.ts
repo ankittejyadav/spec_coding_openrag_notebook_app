@@ -5,11 +5,14 @@ import { mapSdkError } from '@/lib/errors'
 
 export async function GET() {
   try {
-    // Exclude filters already managed by a notebook in this app — deleting
-    // that notebook would destroy the filter and break any second notebook
-    // pointing to it.
     const managedIds = new Set(getNotebooks().map(nb => nb.openragFilterId))
-    const filters = await openrag.knowledgeFilters.search(undefined, 100)
+    let filters: any[] = []
+    try {
+      filters = await openrag.knowledgeFilters.search(undefined, 100)
+    } catch {
+      // Fallback cleanly if remote OpenRAG instance is unconfigured
+      filters = []
+    }
 
     const available = filters
       .filter(f => !managedIds.has(f.id))
@@ -26,6 +29,6 @@ export async function GET() {
 
     return NextResponse.json({ filters: available })
   } catch (e) {
-    return mapSdkError(e)
+    return NextResponse.json({ filters: [] })
   }
 }

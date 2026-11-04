@@ -6,7 +6,7 @@ jest.mock('@/lib/db', () => {
   const actual = jest.requireActual('@/lib/db')
   return { ...actual, getDb: () => testDb }
 })
-jest.mock('@/lib/openrag', () => ({ openrag: { knowledgeFilters: { create: jest.fn().mockResolvedValue({ id: 'filter_mock' }), update: jest.fn().mockResolvedValue({}), delete: jest.fn().mockResolvedValue({}), search: jest.fn().mockResolvedValue([]) }, documents: { ingest: jest.fn().mockResolvedValue({ task_id: 't1' }), waitForTask: jest.fn().mockResolvedValue({ status: 'success' }), delete: jest.fn().mockResolvedValue({}) }, chat: { create: jest.fn() } } }))
+jest.mock('@/lib/openrag', () => ({ openrag: { knowledgeFilters: { create: jest.fn().mockResolvedValue({ id: 'filter_mock' }), get: jest.fn().mockResolvedValue({ id: 'filter_mock', name: 'filter_mock', queryData: { filters: { data_sources: [] } } }), update: jest.fn().mockResolvedValue({}), delete: jest.fn().mockResolvedValue({}), search: jest.fn().mockResolvedValue([]) }, documents: { ingest: jest.fn().mockResolvedValue({ task_id: 't1' }), waitForTask: jest.fn().mockResolvedValue({ status: 'success' }), delete: jest.fn().mockResolvedValue({}) }, chat: { create: jest.fn() } } }))
 
 beforeEach(() => { testDb = makeTestDb() })
 afterEach(() => { testDb.close() })

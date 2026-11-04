@@ -1,0 +1,17 @@
+# Comparative Matrix of Vector Databases
+
+Vector databases store high-dimensional embeddings and provide fast Approximate Nearest Neighbor (ANN) search algorithms.
+
+| Vector Database | Hosting Model | Key Features | Primary Best Use Case |
+|---|---|---|---|
+| DataStax Astra DB | Serverless Cloud | Built on Apache Cassandra, Native Data API, High Scalability | Cloud RAG applications & Enterprise AI |
+| OpenSearch | Self-Hosted / Managed | Hybrid search (Lexical BM25 + KNN Vector), Rich metadata filtering | Log analysis & Hybrid enterprise search |
+| Milvus | Open Source / Cloud | Distributed architecture, billions-scale vector indexing | Massive large-scale AI vector storage |
+| Pinecone | Fully Managed Cloud | Serverless vector index, ultra-low latency, zero infra ops | Rapid developer MVP deployment |
+| Qdrant | Hybrid (Cloud/Self) | Payload filtering, Rust performance, custom distance metrics | Recommendation engines & RAG search |
+
+## Key Metrics for Evaluation:
+- Latency (p95 and p99 search response time)
+- Recall Rate (accuracy of approximate nearest neighbors)
+- Ingestion Throughput (vectors indexed per second)
+- Hybrid Search Capability (combining full-text keyword matching with vector embeddings)

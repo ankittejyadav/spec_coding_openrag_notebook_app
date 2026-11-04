@@ -45,25 +45,25 @@ export function deleteNotebook(id: string): void {
 
 // ── Sources ────────────────────────────────────────────────────────────────
 
-export function getSources(notebookId: string): Source[] {
+export function getSources(notebookId: string): (Source & { rawText?: string })[] {
   return db().prepare(
-    'SELECT id, notebook_id as notebookId, title, type, url, openrag_filename as openragFilename, content_hash as contentHash, created_at as createdAt FROM sources WHERE notebook_id = ? ORDER BY created_at ASC'
-  ).all(notebookId) as Source[]
+    'SELECT id, notebook_id as notebookId, title, type, url, openrag_filename as openragFilename, content_hash as contentHash, raw_text as rawText, created_at as createdAt FROM sources WHERE notebook_id = ? ORDER BY created_at ASC'
+  ).all(notebookId) as (Source & { rawText?: string })[]
 }
 
-export function getSource(notebookId: string, sourceId: string): Source | undefined {
+export function getSource(notebookId: string, sourceId: string): (Source & { rawText?: string }) | undefined {
   return db().prepare(
-    'SELECT id, notebook_id as notebookId, title, type, url, openrag_filename as openragFilename, content_hash as contentHash, created_at as createdAt FROM sources WHERE notebook_id = ? AND id = ?'
-  ).get(notebookId, sourceId) as Source | undefined
+    'SELECT id, notebook_id as notebookId, title, type, url, openrag_filename as openragFilename, content_hash as contentHash, raw_text as rawText, created_at as createdAt FROM sources WHERE notebook_id = ? AND id = ?'
+  ).get(notebookId, sourceId) as (Source & { rawText?: string }) | undefined
 }
 
 export function createSource(data: {
   id: string; notebookId: string; title: string; type: SourceType;
-  url?: string; openragFilename: string; contentHash?: string; createdAt: string
+  url?: string; openragFilename: string; contentHash?: string; rawText?: string; createdAt: string
 }): Source {
   db().prepare(
-    'INSERT INTO sources (id, notebook_id, title, type, url, openrag_filename, content_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(data.id, data.notebookId, data.title, data.type, data.url ?? null, data.openragFilename, data.contentHash ?? null, data.createdAt)
+    'INSERT INTO sources (id, notebook_id, title, type, url, openrag_filename, content_hash, raw_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(data.id, data.notebookId, data.title, data.type, data.url ?? null, data.openragFilename, data.contentHash ?? null, data.rawText ?? null, data.createdAt)
   return getSource(data.notebookId, data.id)!
 }
 
